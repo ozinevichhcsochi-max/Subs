@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#f5f7fb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Замены">
+<title>Замены футболистов</title>
+<style>
+:root{
+  --bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#728096;--line:#dfe5ee;
+  --blue:#2563eb;--blue-soft:#eaf1ff;--green:#138a52;--green-soft:#e8f8ef;
+  --red:#d64747;--red-soft:#fff0f0;--amber:#a66a00;--amber-soft:#fff7df;
+  --shadow:0 8px 28px rgba(24,39,75,.08)
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+button,input{font:inherit}
+button{cursor:pointer}
+.app{max-width:720px;margin:auto;min-height:100vh}
+.screen{display:none;padding:16px;min-height:100vh}
+.screen.active{display:block}
+.match-screen{padding:0}
+h1,h2,p{margin-top:0}
+h1{font-size:28px;margin-bottom:6px}
+.sub{color:var(--muted);line-height:1.4;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;margin-bottom:12px;box-shadow:var(--shadow)}
+.title-row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.section-title{font-weight:850;font-size:18px}
+.input{width:100%;border:1px solid var(--line);background:#fff;border-radius:13px;padding:13px 14px;color:var(--text);outline:none;font-size:17px}
+.input:focus{border-color:#8aafff;box-shadow:0 0 0 3px #edf3ff}
+.add-grid{display:grid;grid-template-columns:82px 1fr auto;gap:8px}
+.number-input{-moz-appearance:textfield}
+.number-input::-webkit-outer-spin-button,.number-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.btn{border:0;border-radius:13px;padding:13px 15px;min-height:48px;font-weight:800;background:var(--blue);color:#fff}
+.btn.secondary{background:#fff;color:var(--text);border:1px solid var(--line)}
+.btn.danger{background:var(--red-soft);color:var(--red);border:1px solid #ffd0d0}
+.btn.full{width:100%}
+.btn.small{min-height:38px;padding:8px 11px;font-size:13px}
+.players{display:grid;gap:8px;margin-top:12px}
+.player{display:grid;grid-template-columns:45px 1fr auto;gap:8px;align-items:center;padding:9px;border:1px solid var(--line);border-radius:14px;background:#fafbfc}
+.num{width:40px;height:40px;border-radius:12px;background:var(--blue-soft);color:var(--blue);display:grid;place-items:center;font-weight:900}
+.name{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty{text-align:center;color:var(--muted);padding:18px 8px}
+.sticky{position:sticky;bottom:0;padding:14px 0 calc(8px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 35%)}
+
+.selection-list{display:grid;gap:9px}
+.selection-player{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:15px;background:#fff}
+.role-buttons{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.role-btn{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:11px;padding:9px 7px;font-size:13px;font-weight:800}
+.role-btn.active-start{background:var(--green-soft);border-color:#bde8ce;color:var(--green)}
+.role-btn.active-bench{background:var(--blue-soft);border-color:#cadcff;color:var(--blue)}
+.role-btn.active-out{background:#f2f4f7;border-color:#d5dbe5;color:#68758a}
+.counts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.count{background:#fff;border:1px solid var(--line);border-radius:14px;padding:11px;text-align:center}
+.count strong{display:block;font-size:22px}
+.count span{font-size:12px;color:var(--muted)}
+.count.start strong{color:var(--green)}
+.count.bench strong{color:var(--blue)}
+.notice{padding:11px 12px;border-radius:13px;background:var(--amber-soft);color:var(--amber);font-size:14px;font-weight:700;margin-bottom:12px}
+
+.topbar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:13px 15px;background:rgba(245,247,251,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.topbar strong{font-size:19px}
+.menu-btn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 12px;font-weight:800;color:var(--text)}
+.match-main{padding:14px}
+.entry-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:14px;box-shadow:var(--shadow)}
+.big-input-wrap{position:relative}
+.big-input{width:100%;height:58px;border:2px solid #d9e1ec;border-radius:15px;padding:0 15px;font-size:19px;font-weight:700;outline:none}
+.big-input:focus{border-color:#77a0ff}
+.hint{font-size:13px;color:var(--muted);margin:9px 2px 0}
+.suggestions{display:none;position:absolute;left:0;right:0;top:64px;background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:0 16px 38px rgba(24,39,75,.16);z-index:50;max-height:320px;overflow:auto}
+.suggestions.open{display:block}
+.suggestion{display:flex;align-items:center;gap:11px;padding:12px;border-bottom:1px solid #eef1f5}
+.suggestion:last-child{border-bottom:0}
+.suggestion:active{background:#f2f6ff}
+.snum{width:38px;height:38px;border-radius:11px;background:var(--blue-soft);color:var(--blue);display:grid;place-items:center;font-weight:900;flex:none}
+.smeta{font-size:12px;color:var(--muted);margin-top:2px}
+.selected{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{display:flex;align-items:center;gap:7px;border-radius:999px;padding:8px 10px;background:#f2f5f9;border:1px solid var(--line);font-weight:750}
+.chip.start{background:var(--green-soft);border-color:#bde8ce;color:#0d7544}
+.chip.bench{background:var(--blue-soft);border-color:#cadcff;color:#2357bc}
+.chip button{border:0;background:transparent;color:inherit;font-size:18px;padding:0;line-height:1}
+.preview{margin-top:14px;display:grid;gap:9px}
+.pair{display:grid;grid-template-columns:1fr 38px 1fr;align-items:center;gap:7px;padding:11px;border:1px solid var(--line);border-radius:15px;background:#fafbfc}
+.side{min-width:0}
+.side-label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:850;margin-bottom:4px}
+.side-label.out{color:var(--red)}
+.side-label.in{color:var(--green)}
+.pname{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pnum{font-size:23px;font-weight:950}
+.arrow{text-align:center;font-size:25px;color:#8995a8}
+.problem{padding:11px 12px;border-radius:13px;background:var(--amber-soft);color:var(--amber);font-size:14px;font-weight:700}
+.actions{display:grid;gap:9px;margin-top:13px}
+.confirm-btn{font-size:19px;min-height:58px}
+.history{padding:4px 14px 30px}
+.history h2{font-size:20px;margin:16px 0 10px}
+.history-list{display:grid;gap:8px}
+.history-item{background:#fff;border:1px solid var(--line);border-radius:15px;padding:12px 13px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.history-main{font-weight:850;line-height:1.35}
+.out-text{color:var(--red)}
+.in-text{color:var(--green)}
+.time{font-size:12px;color:var(--muted);white-space:nowrap;text-align:right}
+.modal{display:none;position:fixed;inset:0;z-index:100;background:rgba(23,32,51,.4);align-items:center;justify-content:center;padding:18px}
+.modal.open{display:flex}
+.modal-box{width:min(100%,430px);background:#fff;border-radius:20px;padding:17px;box-shadow:0 24px 70px rgba(20,30,50,.25)}
+.modal-actions{display:grid;gap:9px;margin-top:14px}
+@media(max-width:520px){
+  .add-grid{grid-template-columns:72px 1fr}.add-grid .btn{grid-column:1/-1}
+  .pair{grid-template-columns:1fr 30px 1fr;padding:10px 8px}.pnum{font-size:21px}.pname{font-size:14px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<section id="squadScreen" class="screen active">
+  <h1>Команда</h1>
+  <p class="sub">Один раз внесите полный список игроков. Перед каждым матчем состав и запас выбираются отдельно.</p>
+
+  <div class="card">
+    <div class="section-title" style="margin-bottom:11px">Добавить игрока</div>
+    <div class="add-grid">
+      <input id="playerNumber" class="input number-input" type="text" inputmode="numeric" maxlength="2" placeholder="№">
+      <input id="playerName" class="input" type="text" autocomplete="off" placeholder="Фамилия">
+      <button id="addPlayer" class="btn">Добавить</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title-row">
+      <div class="section-title">Полный список</div>
+      <button id="clearSquad" class="btn danger small">Очистить</button>
+    </div>
+    <div id="squadList" class="players"></div>
+  </div>
+
+  <div class="sticky">
+    <button id="goToSelection" class="btn full">Выбрать состав на матч</button>
+  </div>
+</section>
+
+<section id="selectionScreen" class="screen">
+  <h1>Состав на матч</h1>
+  <p class="sub">Для каждого игрока выберите: старт, запас или вне заявки.</p>
+
+  <div class="counts">
+    <div class="count start"><strong id="startCount">0</strong><span>Старт</span></div>
+    <div class="count bench"><strong id="benchCount">0</strong><span>Запас</span></div>
+    <div class="count"><strong id="outCount">0</strong><span>Вне заявки</span></div>
+  </div>
+
+  <div id="selectionNotice" class="notice">Выберите стартовый состав и запасных.</div>
+
+  <div class="card">
+    <div id="selectionList" class="selection-list"></div>
+  </div>
+
+  <div class="sticky" style="display:grid;gap:9px">
+    <button id="startMatch" class="btn full">Перейти в режим матча</button>
+    <button id="backToSquad" class="btn secondary full">Назад к команде</button>
+  </div>
+</section>
+
+<section id="matchScreen" class="screen match-screen">
+  <div class="topbar">
+    <strong>Замены</strong>
+    <button id="openMenu" class="menu-btn">Меню</button>
+  </div>
+
+  <div class="match-main">
+    <div class="entry-card">
+      <div class="big-input-wrap">
+        <input id="searchPlayer" class="big-input" type="text" autocomplete="off" placeholder="Введите фамилии">
+        <div id="suggestions" class="suggestions"></div>
+      </div>
+      <div class="hint">Выбирайте фамилии одну за другой. Порядок не важен — приложение само соединит игрока стартового состава с запасным.</div>
+
+      <div id="selectedPlayers" class="selected"></div>
+      <div id="pairsPreview" class="preview"></div>
+
+      <div class="actions">
+        <button id="confirmSubs" class="btn full confirm-btn">Зафиксировать замены</button>
+        <button id="clearSelected" class="btn secondary full">Очистить выбранных</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="history">
+    <h2>История замен</h2>
+    <div id="historyList" class="history-list"></div>
+  </div>
+</section>
+
+</div>
+
+<div id="menuModal" class="modal">
+  <div class="modal-box">
+    <h2 style="margin-bottom:5px">Меню</h2>
+    <p class="sub" style="margin-bottom:0">Управление текущим матчем.</p>
+    <div class="modal-actions">
+      <button id="editMatchSquad" class="btn secondary full">Изменить состав на матч</button>
+      <button id="newMatch" class="btn secondary full">Новый матч</button>
+      <button id="clearHistory" class="btn danger full">Очистить историю</button>
+      <button id="closeMenu" class="btn full">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'footballSubsAppV5';
+  const state = {
+    players: [],
+    matchRoles: {},
+    history: [],
+    selected: []
+  };
+
+  const byId = id => document.getElementById(id);
+
+  function makeId(){
+    return (window.crypto && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : String(Date.now()) + String(Math.random());
+  }
+
+  function save(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      players: state.players,
+      matchRoles: state.matchRoles,
+      history: state.history
+    }));
+  }
+
+  function load(){
+    try{
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      if(Array.isArray(saved.players)) state.players = saved.players;
+      if(saved.matchRoles && typeof saved.matchRoles === 'object') state.matchRoles = saved.matchRoles;
+      if(Array.isArray(saved.history)) state.history = saved.history;
+    }catch(error){}
+  }
+
+  function escapeHtml(value){
+    return String(value).replace(/[&<>"']/g, char => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+    }[char]));
+  }
+
+  function normalize(value){
+    return String(value || '').trim().toLowerCase().replace(/ё/g,'е');
+  }
+
+  function showScreen(screenId){
+    ['squadScreen','selectionScreen','matchScreen'].forEach(id => {
+      byId(id).classList.toggle('active', id === screenId);
+    });
+    window.scrollTo(0,0);
+  }
+
+  function addPlayer(){
+    const number = parseInt(byId('playerNumber').value, 10);
+    const name = byId('playerName').value.trim();
+
+    if(!number || number < 1 || number > 99){
+      alert('Введите игровой номер от 1 до 99.');
+      return;
+    }
+    if(!name){
+      alert('Введите фамилию игрока.');
+      return;
+    }
+    if(state.players.some(player => player.number === number)){
+      alert('Игрок с таким номером уже есть.');
+      return;
+    }
+
+    const player = {id:makeId(), number, name};
+    state.players.push(player);
+    state.players.sort((a,b) => a.number - b.number);
+    state.matchRoles[player.id] = 'out';
+
+    byId('playerNumber').value = '';
+    byId('playerName').value = '';
+    save();
+    renderSquad();
+    byId('playerNumber').focus();
+  }
+
+  function renderSquad(){
+    const box = byId('squadList');
+    if(!state.players.length){
+      box.innerHTML = '<div class="empty">Игроки пока не добавлены</div>';
+      return;
+    }
+
+    box.innerHTML = '';
+    state.players.forEach(player => {
+      const row = document.createElement('div');
+      row.className = 'player';
+      row.innerHTML = `
+        <div class="num">${player.number}</div>
+        <div class="name">${escapeHtml(player.name)}</div>
+        <button class="btn danger small">×</button>
+      `;
+      row.querySelector('button').onclick = () => {
+        state.players = state.players.filter(item => item.id !== player.id);
+        delete state.matchRoles[player.id];
+        state.selected = state.selected.filter(id => id !== player.id);
+        save();
+        renderSquad();
+      };
+      box.appendChild(row);
+    });
+  }
+
+  function prepareSelection(){
+    if(state.players.length < 2){
+      alert('Сначала добавьте игроков команды.');
+      return;
+    }
+    state.players.forEach(player => {
+      if(!['start','bench','out'].includes(state.matchRoles[player.id])){
+        state.matchRoles[player.id] = 'out';
+      }
+    });
+    renderSelection();
+    showScreen('selectionScreen');
+  }
+
+  function setRole(playerId, role){
+    state.matchRoles[playerId] = role;
+    save();
+    renderSelection();
+  }
+
+  function renderSelection(){
+    const box = byId('selectionList');
+    box.innerHTML = '';
+
+    state.players.forEach(player => {
+      const role = state.matchRoles[player.id] || 'out';
+      const row = document.createElement('div');
+      row.className = 'selection-player';
+      row.innerHTML = `
+        <div class="num">${player.number}</div>
+        <div class="name">${escapeHtml(player.name)}</div>
+        <div class="role-buttons">
+          <button class="role-btn ${role === 'start' ? 'active-start' : ''}" data-role="start">Старт</button>
+          <button class="role-btn ${role === 'bench' ? 'active-bench' : ''}" data-role="bench">Запас</button>
+          <button class="role-btn ${role === 'out' ? 'active-out' : ''}" data-role="out">Вне заявки</button>
+        </div>
+      `;
+      row.querySelectorAll('.role-btn').forEach(button => {
+        button.onclick = () => setRole(player.id, button.dataset.role);
+      });
+      box.appendChild(row);
+    });
+
+    const startCount = state.players.filter(player => state.matchRoles[player.id] === 'start').length;
+    const benchCount = state.players.filter(player => state.matchRoles[player.id] === 'bench').length;
+    const outCount = state.players.length - startCount - benchCount;
+
+    byId('startCount').textContent = startCount;
+    byId('benchCount').textContent = benchCount;
+    byId('outCount').textContent = outCount;
+
+    const notice = byId('selectionNotice');
+    if(startCount === 0 || benchCount === 0){
+      notice.textContent = 'Нужен хотя бы один игрок в старте и один запасной.';
+    }else{
+      notice.textContent = `На матч выбрано: ${startCount} в старте и ${benchCount} в запасе.`;
+    }
+  }
+
+  function enterMatch(){
+    const startCount = state.players.filter(player => state.matchRoles[player.id] === 'start').length;
+    const benchCount = state.players.filter(player => state.matchRoles[player.id] === 'bench').length;
+
+    if(startCount === 0 || benchCount === 0){
+      alert('Выберите хотя бы одного игрока в старт и одного в запас.');
+      return;
+    }
+
+    state.selected = [];
+    save();
+    renderSelected();
+    renderHistory();
+    showScreen('matchScreen');
+    setTimeout(() => byId('searchPlayer').focus(), 100);
+  }
+
+  function showSuggestions(){
+    const query = normalize(byId('searchPlayer').value);
+    const box = byId('suggestions');
+
+    let list = state.players.filter(player => {
+      const role = state.matchRoles[player.id];
+      return (role === 'start' || role === 'bench') && !state.selected.includes(player.id);
+    });
+
+    if(query){
+      list = list.filter(player =>
+        normalize(player.name).includes(query) ||
+        String(player.number).startsWith(query)
+      );
+    }
+
+    list.sort((a,b) => {
+      const roleA = state.matchRoles[a.id];
+      const roleB = state.matchRoles[b.id];
+      if(roleA !== roleB) return roleA === 'start' ? -1 : 1;
+      return a.number - b.number;
+    });
+
+    box.innerHTML = '';
+    if(!list.length){
+      box.innerHTML = '<div class="suggestion" style="color:#728096">Игрок не найден</div>';
+    }
+
+    list.forEach(player => {
+      const role = state.matchRoles[player.id];
+      const item = document.createElement('div');
+      item.className = 'suggestion';
+      item.innerHTML = `
+        <div class="snum">${player.number}</div>
+        <div>
+          <strong>${escapeHtml(player.name)}</strong>
+          <div class="smeta">${role === 'start' ? 'Стартовый состав' : 'Запасной'}</div>
+        </div>
+      `;
+      item.onpointerdown = event => {
+        event.preventDefault();
+        selectPlayer(player.id);
+      };
+      box.appendChild(item);
+    });
+
+    box.classList.add('open');
+  }
+
+  function selectPlayer(playerId){
+    if(state.selected.includes(playerId)) return;
+    if(state.selected.length >= 10){
+      alert('За один раз можно выбрать не более 10 игроков — это 5 замен.');
+      return;
+    }
+    state.selected.push(playerId);
+    byId('searchPlayer').value = '';
+    byId('suggestions').classList.remove('open');
+    renderSelected();
+    setTimeout(() => byId('searchPlayer').focus(), 0);
+  }
+
+  function removeSelected(playerId){
+    state.selected = state.selected.filter(id => id !== playerId);
+    renderSelected();
+  }
+
+  function getPairs(){
+    const selectedPlayers = state.selected
+      .map(id => state.players.find(player => player.id === id))
+      .filter(Boolean);
+
+    const starters = selectedPlayers.filter(player => state.matchRoles[player.id] === 'start');
+    const substitutes = selectedPlayers.filter(player => state.matchRoles[player.id] === 'bench');
+    const pairCount = Math.min(starters.length, substitutes.length);
+    const pairs = [];
+
+    for(let index = 0; index < pairCount; index++){
+      pairs.push({outPlayer:starters[index], inPlayer:substitutes[index]});
+    }
+
+    return {pairs, starters, substitutes};
+  }
+
+  function renderSelected(){
+    const selectedBox = byId('selectedPlayers');
+    selectedBox.innerHTML = '';
+
+    state.selected.forEach(playerId => {
+      const player = state.players.find(item => item.id === playerId);
+      if(!player) return;
+      const role = state.matchRoles[player.id];
+      const chip = document.createElement('div');
+      chip.className = `chip ${role}`;
+      chip.innerHTML = `${player.number} ${escapeHtml(player.name)} <button>×</button>`;
+      chip.querySelector('button').onclick = () => removeSelected(player.id);
+      selectedBox.appendChild(chip);
+    });
+
+    const data = getPairs();
+    const preview = byId('pairsPreview');
+    preview.innerHTML = '';
+
+    data.pairs.forEach(pair => {
+      const row = document.createElement('div');
+      row.className = 'pair';
+      row.innerHTML = `
+        <div class="side">
+          <div class="side-label out">Уходит</div>
+          <div class="pnum">${pair.outPlayer.number}</div>
+          <div class="pname">${escapeHtml(pair.outPlayer.name)}</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="side">
+          <div class="side-label in">Выходит</div>
+          <div class="pnum">${pair.inPlayer.number}</div>
+          <div class="pname">${escapeHtml(pair.inPlayer.name)}</div>
+        </div>
+      `;
+      preview.appendChild(row);
+    });
+
+    if(state.selected.length && data.starters.length !== data.substitutes.length){
+      const warning = document.createElement('div');
+      warning.className = 'problem';
+      warning.textContent = data.starters.length > data.substitutes.length
+        ? 'Добавьте запасного игрока.'
+        : 'Добавьте игрока стартового состава.';
+      preview.appendChild(warning);
+    }
+  }
+
+  function confirmSubstitutions(){
+    const data = getPairs();
+
+    if(!data.pairs.length){
+      alert('Выберите хотя бы одного стартового и одного запасного игрока.');
+      return;
+    }
+    if(data.starters.length !== data.substitutes.length){
+      alert('Для каждой замены должен быть один стартовый и один запасной игрок.');
+      return;
+    }
+
+    const now = new Date();
+
+    data.pairs.forEach(pair => {
+      state.history.unshift({
+        id: makeId(),
+        outName: pair.outPlayer.name,
+        outNumber: pair.outPlayer.number,
+        inName: pair.inPlayer.name,
+        inNumber: pair.inPlayer.number,
+        time: now.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}),
+        date: now.toLocaleDateString('ru-RU')
+      });
+
+      state.matchRoles[pair.outPlayer.id] = 'bench';
+      state.matchRoles[pair.inPlayer.id] = 'start';
+    });
+
+    state.selected = [];
+    save();
+    renderSelected();
+    renderHistory();
+    byId('searchPlayer').focus();
+  }
+
+  function renderHistory(){
+    const box = byId('historyList');
+    if(!state.history.length){
+      box.innerHTML = '<div class="empty">Замен пока не было</div>';
+      return;
+    }
+
+    box.innerHTML = '';
+    state.history.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'history-item';
+      row.innerHTML = `
+        <div class="history-main">
+          <span class="out-text">${item.outNumber} ${escapeHtml(item.outName)}</span>
+          →
+          <span class="in-text">${item.inNumber} ${escapeHtml(item.inName)}</span>
+        </div>
+        <div class="time">${item.time}<br>${item.date}</div>
+      `;
+      box.appendChild(row);
+    });
+  }
+
+  function startNewMatch(){
+    const accepted = window.confirm('Начать новый матч? Текущая история замен будет очищена.');
+    if(!accepted) return;
+
+    state.history = [];
+    state.selected = [];
+    state.players.forEach(player => {
+      state.matchRoles[player.id] = 'out';
+    });
+    save();
+    byId('menuModal').classList.remove('open');
+    renderSelection();
+    showScreen('selectionScreen');
+  }
+
+  byId('addPlayer').onclick = addPlayer;
+  byId('playerNumber').onkeydown = event => {
+    if(event.key === 'Enter') byId('playerName').focus();
+  };
+  byId('playerName').onkeydown = event => {
+    if(event.key === 'Enter') addPlayer();
+  };
+
+  byId('clearSquad').onclick = () => {
+    if(!window.confirm('Удалить весь список команды и историю замен?')) return;
+    state.players = [];
+    state.matchRoles = {};
+    state.history = [];
+    state.selected = [];
+    save();
+    renderSquad();
+  };
+
+  byId('goToSelection').onclick = prepareSelection;
+  byId('backToSquad').onclick = () => showScreen('squadScreen');
+  byId('startMatch').onclick = enterMatch;
+
+  byId('searchPlayer').onfocus = showSuggestions;
+  byId('searchPlayer').oninput = showSuggestions;
+  byId('searchPlayer').onblur = () => {
+    setTimeout(() => byId('suggestions').classList.remove('open'), 120);
+  };
+
+  byId('clearSelected').onclick = () => {
+    state.selected = [];
+    renderSelected();
+    byId('searchPlayer').focus();
+  };
+
+  byId('confirmSubs').onclick = confirmSubstitutions;
+
+  byId('openMenu').onclick = () => byId('menuModal').classList.add('open');
+  byId('closeMenu').onclick = () => byId('menuModal').classList.remove('open');
+
+  byId('editMatchSquad').onclick = () => {
+    byId('menuModal').classList.remove('open');
+    renderSelection();
+    showScreen('selectionScreen');
+  };
+
+  byId('newMatch').onclick = startNewMatch;
+
+  byId('clearHistory').onclick = () => {
+    if(!window.confirm('Очистить историю замен?')) return;
+    state.history = [];
+    save();
+    renderHistory();
+    byId('menuModal').classList.remove('open');
+  };
+
+  byId('menuModal').onclick = event => {
+    if(event.target === byId('menuModal')){
+      byId('menuModal').classList.remove('open');
+    }
+  };
+
+  load();
+  renderSquad();
+})();
+</script>
+</body>
+</html>
